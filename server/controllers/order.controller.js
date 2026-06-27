@@ -1,5 +1,8 @@
 import {Order, CartItem} from '../models/order.model'
 import errorHandler from './../helpers/dbErrorHandler'
+import config from '../../config/config'
+import Razorpay from 'razorpay'
+
 
 const create = async (req, res) => {
   try {
@@ -78,6 +81,34 @@ const read = (req, res) => {
   return res.json(req.order)
 }
 
+const getRazorpayKey = (req, res) => {
+  res.status(200).json({ key: config.razorpay_key_id })
+}
+
+const createRazorpayOrder = async (req, res) => {
+  try {
+    const razorpay = new Razorpay({
+      key_id: config.razorpay_key_id,
+      key_secret: config.razorpay_key_secret
+    })
+    
+    const amount = Math.round(req.body.amount * 100)
+    
+    const options = {
+      amount: amount,
+      currency: "USD",
+      receipt: "receipt_order_" + Date.now()
+    }
+    
+    const order = await razorpay.orders.create(options)
+    res.status(200).json(order)
+  } catch (err) {
+    return res.status(400).json({
+      error: err.message || "Could not create Razorpay order"
+    })
+  }
+}
+
 export default {
   create,
   listByShop,
@@ -85,5 +116,7 @@ export default {
   getStatusValues,
   orderByID,
   listByUser,
-  read
+  read,
+  getRazorpayKey,
+  createRazorpayOrder
 }

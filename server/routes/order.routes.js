@@ -7,8 +7,14 @@ import userCtrl from '../controllers/user.controller'
 
 const router = express.Router()
 
+router.route('/api/razorpay/key')
+  .get(authCtrl.requireSignin, orderCtrl.getRazorpayKey)
+
+router.route('/api/razorpay/order')
+  .post(authCtrl.requireSignin, orderCtrl.createRazorpayOrder)
+
 router.route('/api/orders/:userId')
-  .post(authCtrl.requireSignin, userCtrl.stripeCustomer, productCtrl.decreaseQuantity, orderCtrl.create)
+  .post(authCtrl.requireSignin, userCtrl.verifyRazorpaySignature, productCtrl.decreaseQuantity, orderCtrl.create)
 
 router.route('/api/orders/shop/:shopId')
   .get(authCtrl.requireSignin, shopCtrl.isOwner, orderCtrl.listByShop)

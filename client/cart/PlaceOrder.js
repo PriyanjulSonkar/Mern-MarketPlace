@@ -6,8 +6,7 @@ import Typography from '@material-ui/core/Typography'
 import Icon from '@material-ui/core/Icon'
 import auth from './../auth/auth-helper'
 import cart from './cart-helper.js'
-import {CardElement, injectStripe} from 'react-stripe-elements'
-import {create} from './../order/api-order.js'
+import {create, getRazorpayKey, createRazorpayOrder} from './../order/api-order.js'
 import {Redirect} from 'react-router-dom'
 
 const useStyles = makeStyles(theme => ({
@@ -25,15 +24,6 @@ const useStyles = makeStyles(theme => ({
   },
   errorIcon: {
     verticalAlign: 'middle'
-  },
-  StripeElement: {
-    display: 'block',
-    margin: '24px 0 10px 10px',
-    maxWidth: '408px',
-    padding: '10px 14px',
-    boxShadow: 'rgba(50, 50, 93, 0.14902) 0px 1px 3px, rgba(0, 0, 0, 0.0196078) 0px 1px 0px',
-    borderRadius: '4px',
-    background: 'white'
   }
 }))
 
@@ -46,53 +36,90 @@ const PlaceOrder = (props) => {
     orderId: ''
   })
 
-  const placeOrder = ()=>{
-    props.stripe.createToken().then(payload => {
-      if(payload.error){
-        setValues({...values, error: payload.error.message})
-      }else{
-        const jwt = auth.isAuthenticated()
-        create({userId:jwt.user._id}, {
-          t: jwt.token
-        }, props.checkoutDetails, payload.token.id).then((data) => {
-          if (data.error) {
-            setValues({...values, error: data.error})
-          } else {
-            cart.emptyCart(()=> {
-              setValues({...values, 'orderId':data._id,'redirect': true})
-            })
-          }
-        })
-      }
-  })
-}
-
-
-    if (values.redirect) {
-      return (<Redirect to={'/order/' + values.orderId}/>)
+  const placeOrder = () => {
+    const details = props.checkoutDetails
+    if (!details.customer_name || !details.customer_email || 
+        !details.delivery_address.street || !details.delivery_address.city || 
+        !details.delivery_address.zipcode || !details.delivery_address.country) {
+      setValues({...values, error: "Please fill out all the checkout and delivery details first."})
+      return
     }
-    return (
+
+    const jwt = auth.isAuthenticated()
+    if (!jwt) {
+      setValues({...values, error: "Please sign in to place an order."})
+      return
+    }
+
+    const total = props.checkoutDetails.products.reduce((sum, item) => sum + (item.quantity * item.product.price), 0)
+
+    // 1. Get Razorpay Public Key ID
+    getRazorpayKey({t: jwt.token}).then(keyData => {
+      if (!keyData || keyData.error) {
+        setValues({...values, error: keyData ? keyData.error : "Could not fetch payment key"})
+        return
+      }
+
+      // 2. Create Razorpay Order
+      createRazorpayOrder({t: jwt.token}, total).then(orderData => {
+        if (!orderData || orderData.error) {
+          setValues({...values, error: orderData ? orderData.error : "Could not initialize payment order"})
+          return
+        }
+
+        // 3. Open Razorpay Checkout overlay
+        const options = {
+          key: keyData.key,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: "MERN Marketplace",
+          description: "Order Checkout Payment",
+          order_id: orderData.id,
+          handler: function (response) {
+            const paymentInfo = {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature
+            }
+
+            // 4. Create local order after successful transaction
+            create({userId: jwt.user._id}, {t: jwt.token}, props.checkoutDetails, paymentInfo).then((data) => {
+              if (!data || data.error) {
+                setValues({...values, error: data ? data.error : "Could not save your order"})
+              } else {
+                cart.emptyCart(() => {
+                  setValues({...values, 'orderId': data._id, 'redirect': true})
+                })
+              }
+            })
+          },
+          prefill: {
+            name: props.checkoutDetails.customer_name,
+            email: props.checkoutDetails.customer_email
+          },
+          theme: {
+            color: "#3f51b5"
+          }
+        }
+
+        const rzp = new window.Razorpay(options)
+        rzp.open()
+      })
+    })
+  }
+
+  if (values.redirect) {
+    return (<Redirect to={'/order/' + values.orderId}/>)
+  }
+
+  return (
     <span>
       <Typography type="subheading" component="h3" className={classes.subheading}>
-        Card details
+        Payment
       </Typography>
-      <CardElement
-        className={classes.StripeElement}
-          {...{style: {
-                        base: {
-                          color: '#424770',
-                          letterSpacing: '0.025em',
-                          fontFamily: 'Source Code Pro, Menlo, monospace',
-                          '::placeholder': {
-                            color: '#aab7c4',
-                          },
-                        },
-                        invalid: {
-                          color: '#9e2146',
-                        },
-                      }
-          }}
-      />
+      <Typography variant="body2" style={{margin: '10px 0', color: 'rgba(0, 0, 0, 0.54)'}}>
+        Review details above and click the button to complete payment via Razorpay.
+      </Typography>
       <div className={classes.checkout}>
         { values.error &&
           (<Typography component="span" color="error" className={classes.error}>
@@ -102,11 +129,12 @@ const PlaceOrder = (props) => {
         }
         <Button color="secondary" variant="contained" onClick={placeOrder}>Place Order</Button>
       </div>
-    </span>)
-
+    </span>
+  )
 }
+
 PlaceOrder.propTypes = {
   checkoutDetails: PropTypes.object.isRequired
 }
 
-export default injectStripe(PlaceOrder)
+export default PlaceOrder

@@ -3,5 +3,5 @@
     "watch": [
       "./server"
     ],
-    "exec": "webpack --mode=development --config webpack.config.server.js && node ./dist/server.generated.js"
+    "exec": "node --openssl-legacy-provider ./node_modules/webpack/bin/webpack.js --mode=development --config webpack.config.server.js && node ./dist/server.generated.js"
 }

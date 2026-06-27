@@ -7,7 +7,6 @@ import Icon from '@material-ui/core/Icon'
 import auth from './../auth/auth-helper'
 import cart from './cart-helper.js'
 import PlaceOrder from './PlaceOrder'
-import {Elements} from 'react-stripe-elements'
 
 const useStyles = makeStyles(theme => ({
   card: {
@@ -88,9 +87,7 @@ export default function Checkout (){
                 {values.error}</Typography>)
           }
         <div>
-          <Elements>
-            <PlaceOrder checkoutDetails={values.checkoutDetails} />
-          </Elements>
+          <PlaceOrder checkoutDetails={values.checkoutDetails} />
         </div>
       </Card>)
 }

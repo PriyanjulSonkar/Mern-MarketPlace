@@ -3,9 +3,7 @@ import extend from 'lodash/extend'
 import errorHandler from './../helpers/dbErrorHandler'
 import request from 'request'
 import config from './../../config/config'
-import stripe from 'stripe'
-
-const myStripe = stripe(config.stripe_test_secret_key)
+import crypto from 'crypto'
 
 const create = async (req, res) => {
   const user = new User(req.body)
@@ -98,78 +96,34 @@ const isSeller = (req, res, next) => {
 }
 
 const stripe_auth = (req, res, next) => {
-  request({
-    url: "https://connect.stripe.com/oauth/token",
-    method: "POST",
-    json: true,
-    body: {client_secret:config.stripe_test_secret_key,code:req.body.stripe, grant_type:'authorization_code'}
-  }, (error, response, body) => {
-    //update user
-    if(body.error){
-      return res.status('400').json({
-        error: body.error_description
-      })
-    }
-    req.body.stripe_seller = body
-    next()
-  })
+  next()
 }
 
-const stripeCustomer = (req, res, next) => {
-  if(req.profile.stripe_customer){
-      //update stripe customer
-      myStripe.customers.update(req.profile.stripe_customer, {
-          source: req.body.token
-      }, (err, customer) => {
-        if(err){
-          return res.status(400).send({
-            error: "Could not update charge details"
-          })
-        }
-        req.body.order.payment_id = customer.id
-        next()
-      })
-  }else{
-      myStripe.customers.create({
-            email: req.profile.email,
-            source: req.body.token
-      }).then((customer) => {
-          User.update({'_id':req.profile._id},
-            {'$set': { 'stripe_customer': customer.id }},
-            (err, order) => {
-              if (err) {
-                return res.status(400).send({
-                  error: errorHandler.getErrorMessage(err)
-                })
-              }
-              req.body.order.payment_id = customer.id
-              next()
-            })
-      })
+const verifyRazorpaySignature = (req, res, next) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body.token || req.body.paymentInfo || {}
+  
+  if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+    return res.status(400).json({
+      error: "Missing payment information from Razorpay"
+    })
   }
+
+  const hmac = crypto.createHmac('sha256', config.razorpay_key_secret)
+  hmac.update(razorpay_order_id + "|" + razorpay_payment_id)
+  const generated_signature = hmac.digest('hex')
+
+  if (generated_signature !== razorpay_signature) {
+    return res.status(400).json({
+      error: "Payment verification failed"
+    })
+  }
+
+  req.body.order.payment_id = razorpay_payment_id
+  next()
 }
 
 const createCharge = (req, res, next) => {
-  if(!req.profile.stripe_seller){
-    return res.status('400').json({
-      error: "Please connect your Stripe account"
-    })
-  }
-  myStripe.tokens.create({
-    customer: req.order.payment_id,
-  }, {
-    stripeAccount: req.profile.stripe_seller.stripe_user_id,
-  }).then((token) => {
-      myStripe.charges.create({
-        amount: req.body.amount * 100, //amount in cents
-        currency: "usd",
-        source: token.id,
-      }, {
-        stripeAccount: req.profile.stripe_seller.stripe_user_id,
-      }).then((charge) => {
-        next()
-      })
-  })
+  next()
 }
 
 export default {
@@ -181,6 +135,6 @@ export default {
   update,
   isSeller,
   stripe_auth,
-  stripeCustomer,
+  verifyRazorpaySignature,
   createCharge
 }
