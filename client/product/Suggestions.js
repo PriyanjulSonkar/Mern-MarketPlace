@@ -104,7 +104,7 @@ export default function Suggestions (props) {
                     </Typography>
                   </CardContent>
                   <div className={classes.controls}>
-                    <Typography type="subheading" component="h3" className={classes.price} color="primary">$ {item.price}</Typography>
+                    <Typography type="subheading" component="h3" className={classes.price} color="primary">₹ {item.price}</Typography>
                       <span className={classes.actions}>
                         <Link to={'/product/'+item._id}>
                           <IconButton color="secondary" dense="dense">

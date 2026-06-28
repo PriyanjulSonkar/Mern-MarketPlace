@@ -126,7 +126,7 @@ export default function Auction ({match}) {
                         <Timer endTime={auction.bidEnd} update={update}/> 
                         { auction.bids.length > 0 &&  
                             <Typography component="p" variant="subtitle1" className={classes.lastBid}>
-                                {` Last bid: $ ${auction.bids[0].bid}`}
+                                {` Last bid: ₹ ${auction.bids[0].bid}`}
                             </Typography>
                         }
                         { !auth.isAuthenticated() && <Typography>Please, <Link to='/signin'>sign in</Link> to place your bid.</Typography> }

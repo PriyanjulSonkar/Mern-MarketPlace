@@ -69,10 +69,10 @@ export default function Bidding (props) {
     return(
         <div>
             {!props.justEnded && new Date() < new Date(props.auction.bidEnd) && <div className={classes.placeForm}>
-                <TextField id="bid" label="Your Bid ($)"  
+                <TextField id="bid" label="Your Bid (₹)"  
                         value={bid} onChange={handleChange} 
                         type="number" margin="normal"
-                        helperText={`Enter $${Number(minBid)+1} or more`}
+                        helperText={`Enter ₹${Number(minBid)+1} or more`}
                         className={classes.marginInput}/><br/>
                 <Button variant="contained" className={classes.marginBtn} color="secondary" disabled={bid < (minBid + 1)} onClick={placeBid} >Place Bid</Button><br/>
             </div>}
@@ -91,7 +91,7 @@ export default function Bidding (props) {
                 </Grid>    
                     {props.auction.bids.map((item, index) => {
                         return <Grid container spacing={4} key={index}>
-                            <Grid item xs={3} sm={3}><Typography variant="body2">${item.bid}</Typography></Grid>
+                            <Grid item xs={3} sm={3}><Typography variant="body2">₹{item.bid}</Typography></Grid>
                             <Grid item xs={5} sm={5}><Typography variant="body2">{new Date(item.time).toLocaleString()}</Typography></Grid>
                             <Grid item xs={4} sm={4}><Typography variant="body2">{item.bidder.name}</Typography></Grid>
                         </Grid>

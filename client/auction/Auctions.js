@@ -49,7 +49,7 @@ export default function Auctions(props){
           {currentDate < new Date(auction.bidStart) && `Auction Starts at ${new Date(auction.bidStart).toLocaleString()}`}
           {currentDate > new Date(auction.bidStart) && currentDate < new Date(auction.bidEnd) && <>{`Auction is live | ${auction.bids.length} bids |`} {showTimeLeft(new Date(auction.bidEnd))}</>}
           {currentDate > new Date(auction.bidEnd) && `Auction Ended | ${auction.bids.length} bids `} 
-          {currentDate > new Date(auction.bidStart) && auction.bids.length> 0 && ` | Last bid: $ ${auction.bids[0].bid}`}
+          {currentDate > new Date(auction.bidStart) && auction.bids.length> 0 && ` | Last bid: ₹ ${auction.bids[0].bid}`}
       </span>
     )
   }

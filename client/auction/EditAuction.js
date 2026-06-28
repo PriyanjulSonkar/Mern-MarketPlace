@@ -161,7 +161,7 @@ export default function EditShop ({match}) {
                 className={classes.textField}
                 margin="normal"
               /><br/>
-              <TextField id="startingBid" label="Starting Bid ($)" className={classes.textField} value={auction.startingBid} onChange={handleChange('startingBid')} margin="normal"/><br/>
+              <TextField id="startingBid" label="Starting Bid (₹)" className={classes.textField} value={auction.startingBid} onChange={handleChange('startingBid')} margin="normal"/><br/>
               <br/>
               <TextField
                 id="datetime-local"

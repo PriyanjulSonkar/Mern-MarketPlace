@@ -132,7 +132,7 @@ export default function NewAuction() {
             className={classes.textField}
             margin="normal"
           /><br/>
-          <TextField id="startingBid" label="Starting Bid ($)" className={classes.textField} value={values.startingBid} onChange={handleChange('startingBid')} margin="normal"/><br/>
+          <TextField id="startingBid" label="Starting Bid (₹)" className={classes.textField} value={values.startingBid} onChange={handleChange('startingBid')} margin="normal"/><br/>
           <br/>
           <TextField
             id="datetime-local"

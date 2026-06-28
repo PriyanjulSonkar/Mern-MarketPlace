@@ -123,7 +123,7 @@ export default function Product ({match}) {
                   />
                   <Typography component="p" variant="subtitle1" className={classes.subheading}>
                     {product.description}<br/>
-                    <span className={classes.price}>$ {product.price}</span>
+                    <span className={classes.price}>₹ {product.price}</span>
                     <Link to={'/shops/'+product.shop._id} className={classes.link}>
                       <span>
                         <Icon className={classes.icon}>shopping_basket</Icon> {product.shop.name}
