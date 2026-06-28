@@ -1,10 +1,9 @@
-# MERN Marketplace 2.0
+# MERN Marketplace
 
 An online marketplace application with seller accounts, product search and suggestions, shopping cart, order management, payment processing with Razorpay, and live auction with Socket.io - developed using React, Node, Express, and MongoDB. 
 
 <img align="center" src="https://s3.amazonaws.com/mernbook/git+/marketplace.png" width="56%"> <img align="center" src="https://mernbook.s3.amazonaws.com/git+/marketplace-bidding.png" width="42%">
 
-### [Live Demo](http://marketplace2.mernbook.com/ "MERN Marketplace")
 
 #### What you need to run this code
 1. Node.js (v13+ / v22+)
